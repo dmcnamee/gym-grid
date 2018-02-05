@@ -38,9 +38,9 @@ class FourRooms(gym.Env):
     self.offsets = [0] * (NUM_ROOMS + 1)
     for i in range(NUM_ROOMS):
       self.offsets[i + 1] = self.offsets[i] + self.room_sizes[i][0] * self.room_sizes[i][1] + 1
-    self.nS = self.offsets[4] + 1 # number of states
     self.nA = 4 # number of actions
-    self.absorbing_state = self.nS
+    self.absorbing_state = self.offsets[4] + 1
+    self.nS = self.absorbing_state + 1 # number of states
 
     self.goal = [2, [1, 2]]
     self.terminal_state = self.encode(self.goal)
