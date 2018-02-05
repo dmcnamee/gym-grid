@@ -4,7 +4,8 @@ import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
 
-""" Four rooms. The goal is either in the 3rd room, or in a hallway adjacent to it
+"""
+Four rooms. The goal is either in the 3rd room, or in a hallway adjacent to it
 """
 
 UP = 0
@@ -19,7 +20,7 @@ class FourRooms(gym.Env):
 
   def __init__(self):
     self.room_sizes = [[5,5], [6,5], [5,5], [4,5]]
-    self.pre_hallways = [ 
+    self.pre_hallways = [
                           { tuple([2,4]) : [RIGHT, 0], tuple([4,1]) : [DOWN, 3]},
                           { tuple([2,0]) : [LEFT, 0], tuple([5,2]) : [DOWN, 1]},
                           { tuple([0,2]) : [UP, 1], tuple([2,0]) : [LEFT, 2]},
@@ -33,12 +34,13 @@ class FourRooms(gym.Env):
                       [ [0, [4,1]], [3, self.hallway_coords[3]], [3, [0,1]], [3, self.hallway_coords[3]] ]
                     ]
 
-    
+
     self.offsets = [0] * (NUM_ROOMS + 1)
     for i in range(NUM_ROOMS):
       self.offsets[i + 1] = self.offsets[i] + self.room_sizes[i][0] * self.room_sizes[i][1] + 1
-    self.n_states = self.offsets[4] + 1
-    self.absorbing_state = self.n_states
+    self.nS = self.offsets[4] + 1 # number of states
+    self.nA = 4 # number of actions
+    self.absorbing_state = self.nS
 
     self.goal = [2, [1, 2]]
     self.terminal_state = self.encode(self.goal)
@@ -54,8 +56,8 @@ class FourRooms(gym.Env):
     self.start_state = self.offsets[start_room] + np.random.randint(sz[0]*sz[1] - 1)
     self._reset()
 
-    self.action_space = spaces.Discrete(4)
-    self.observation_space = spaces.Discrete(self.n_states) # with absorbing state
+    self.action_space = spaces.Discrete(self.nA)
+    self.observation_space = spaces.Discrete(self.nS) # with absorbing state
 
 
   def ind2coord(self, index, sizes=None):
@@ -130,13 +132,13 @@ class FourRooms(gym.Env):
 
     if in_hallway: # hallway action
       [room2, coord2] = self.hallways[room][action]
-    
+
     elif tuple(coord) in self.pre_hallways[room].keys():
       hallway_info = self.pre_hallways[room][tuple(coord)]
       if action == hallway_info[0]:
         room2 = hallway_info[1]
         coord2 = self.hallway_coords[room2]
-    
+
     else: # normal action
       [row, col] = coord
       [rows, cols] = self.room_sizes[room]
@@ -165,7 +167,7 @@ class FourRooms(gym.Env):
       return self.terminal_reward
 
     reward = self.step_reward
-    
+
     if self.bump_reward != 0 and self.state == new_state:
       reward = self.bump_reward
 
@@ -177,10 +179,9 @@ class FourRooms(gym.Env):
 
 
   def _reset(self):
-    self.state = self.start_state if not isinstance(self.start_state, str) else np.random.randint(self.n_states - 1)
+    self.state = self.start_state if not isinstance(self.start_state, str) else np.random.randint(self.nS - 1)
     self.done = False
     return self.state
 
   def _render(self, mode='human', close=False):
     pass
-      
