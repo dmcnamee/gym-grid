@@ -34,7 +34,7 @@ puddle_dict = {i:j for i,j in zip(WORLD_PUDDLE,puddle_rewards)}
 class PuddleWorld(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, noise=0.0, terminal_reward=10, 
+    def __init__(self, noise=0.0, terminal_reward=10,
             border_reward=0.0, step_reward=-0.2, start_state_ind=None, wind = 0.5, confusion = 0.1, mine_reward = -4,
             bump_reward =-0.5, fruit_reward = 2, start_states = None,world_file_path = None, init_map = None): #'random'):
         '''
@@ -64,7 +64,7 @@ class PuddleWorld(gym.Env):
             self.n = self.map.shape[0] # assuming Square shape
 
 
-        
+
 
         self.tile_ids = {WORLD_FREE:step_reward,WORLD_OBSTACLE:bump_reward,WORLD_GOAL:terminal_reward,\
          WORLD_FRUIT: fruit_reward, WORLD_MINE : mine_reward, WORLD_INVISIBLE_GOAL: terminal_reward}
@@ -83,7 +83,7 @@ class PuddleWorld(gym.Env):
             self.goal_count_dict # Does goal_count_dict exist?
         except NameError:
             self.goal_count_dict = None
-        
+
 
         # self.n = n # Uncomment when not loading map
         self.noise = noise
@@ -101,23 +101,23 @@ class PuddleWorld(gym.Env):
         self.absorbing_state = self.n_states - 1
         self.done = False
 
-        self.set_start_state(start_states, start_state_ind)        
+        self.set_start_state(start_states, start_state_ind)
 
         # Simulation related variables
-        self._reset()
-        self._seed()
+        self.reset()
+        self.seed()
 
         self.action_space = spaces.Discrete(4)
         # self.observation_space = spaces.Box(low=np.zeros(2), high=np.zeros(2)+n-1) # use wrapper instead
         self.observation_space = spaces.Discrete(self.n_states) # with absorbing state
-        #self._seed()
+        #self.seed()
 
     def set_term_state(self):
         # searches map and sets terminal states
         goal_locs = np.where((self.map == WORLD_GOAL) + (self.map == WORLD_INVISIBLE_GOAL))
         goal_coords = np.c_[goal_locs]
         self.term_states = [self.coord2ind(c) for c in goal_coords] # allows multiple goal states
-        
+
         if (len(self.term_states)>0): self.terminal_state = self.term_states[0] # Picking first one
         else: self.terminal_state = -1
         assert(self.terminal_state is not None)
@@ -133,19 +133,19 @@ class PuddleWorld(gym.Env):
         else:
             self.start_states = start_states
 
-    def _step(self, action):
+    def step(self, action):
         assert self.action_space.contains(action)
 
         if self.state == self.terminal_state:
             self.state = self.absorbing_state #Careful now, don't run env. without resetting
             self.done = True
-            return self.state, self._get_reward(), self.done, None
+            return self.state, self.get_reward(), self.done, None
 
         [row, col] = self.ind2coord(self.state)
 
         if np.random.rand() < self.noise: # Randomly pick an action
             action = self.action_space.sample()
-        
+
         if(np.random.rand() < self.confusion):  # if confused, then pick action apart from that specified
             rand_act = self.action_space.sample()
             while rand_act == action: # while action is the same as picked, keep sampling
@@ -167,18 +167,18 @@ class PuddleWorld(gym.Env):
         if(self.map.T.take(new_state) == WORLD_OBSTACLE):
             new_state = self.state # State remains unchanged
 
-        reward = self._get_reward(new_state=new_state)
+        reward = self.get_reward(new_state=new_state)
 
         self.state = new_state
 
         # Set self.done at end of step
         if self.state == self.terminal_state or self.state in self.term_states:
             self.done = True
-            return self.state, self._get_reward(), self.done, None
+            return self.state, self.get_reward(), self.done, None
 
         return self.state, reward, self.done, None
 
-    def _get_view(self, state=None, n=None, split_view = None):
+    def get_view(self, state=None, n=None, split_view = None):
         # get view of n steps around
         # input: state: (row,col)
 
@@ -201,7 +201,7 @@ class PuddleWorld(gym.Env):
         view = np.zeros((2*n+1,2*n+1))
         if self.done: # Skip if done
             return view
-            
+
         view_up = max(0, n-row)
         view_down = min(self.n -1 - row + n,2*n)
         view_left = max(0, n-col)
@@ -234,7 +234,7 @@ class PuddleWorld(gym.Env):
         return return_view
 
 
-    def _get_reward(self, new_state=None):
+    def get_reward(self, new_state=None):
         if self.done:
             return self.terminal_reward
 
@@ -245,7 +245,7 @@ class PuddleWorld(gym.Env):
 
         self.found_fruit_in_last_turn = (tile == WORLD_FRUIT) # To reduce counter for the Roomworld
 
-        if(tile == WORLD_FRUIT or tile == WORLD_MINE): self.map[r,c] = WORLD_FREE # "pickup fruits" and "step on Mines" 
+        if(tile == WORLD_FRUIT or tile == WORLD_MINE): self.map[r,c] = WORLD_FREE # "pickup fruits" and "step on Mines"
 
         # reward = self.step_reward # Commented out to make it easier to infer tile from reward ( change tile_id[WORLD_FREE] before uncommenting this)
 
@@ -253,7 +253,7 @@ class PuddleWorld(gym.Env):
         #     reward = self.border_reward
 
         # Uncomment to add bump-reward
-        # if self.bump_reward != 0 and self.state == new_state: 
+        # if self.bump_reward != 0 and self.state == new_state:
         #     reward = self.bump_reward
 
         return reward
@@ -292,7 +292,7 @@ class PuddleWorld(gym.Env):
         return col * self.n + row
 
 
-    def _reset(self):
+    def reset(self):
         if(self.start_state_ind is None): # i.e. if start state is not fixed
             start_state_ind = np.random.randint(len(self.start_states))
         else:
@@ -303,13 +303,13 @@ class PuddleWorld(gym.Env):
         self.done = False
         return self.state
 
-    def _seed(self, seed=None):
+    def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _render(self, mode='human', close=False):
+    def render(self, mode='human', close=False):
         pass
-      
+
 class PuddleWorldA(PuddleWorld):
 
     def __init__(self):
@@ -352,7 +352,7 @@ class PuddleWorld_random(PuddleWorld):
         else: self.objects = objects
         m = self.load_random_map()
         super(PuddleWorld_random, self).__init__( init_map = m)
-    
+
     def load_random_map(self):
         m = np.zeros((self.n,self.n))
         num_fruits = self.objects['fruits'];
@@ -372,11 +372,11 @@ class PuddleWorld_random(PuddleWorld):
         m = self.load_random_map()
         self.map = m
 
-    
-    def _reset(self):
+
+    def reset(self):
         #Randomising map at each run
-        self.reload_random(); 
-        return super(PuddleWorld_random, self)._reset()
+        self.reload_random();
+        return super(PuddleWorld_random, self).reset()
 
 class RoomWorld(PuddleWorld):
 # Bounded 2 Rooms w/exit to train sub-policies
@@ -385,7 +385,7 @@ class RoomWorld(PuddleWorld):
         if(n is None): # n >= 5
             self.n = 14
         else: self.n = n
-        
+
         if objects is None:
             self.objects = {'fruits':2,'mines':0} # make sure this is small enough to fit inside world
         else: self.objects = objects
@@ -394,7 +394,7 @@ class RoomWorld(PuddleWorld):
             self.mode = 'fruit'
         else: self.mode = mode
         self.num_rooms = 2 # to make room indices
-        
+
         m,(i,j) = self.load_random_map()
 
         if self.mode == 'fruit':
@@ -402,7 +402,7 @@ class RoomWorld(PuddleWorld):
         else: start_states = [] # Start from a random free location and find the gap (invisible goal)
         # print(start_states)
         super(RoomWorld, self).__init__(init_map = m, start_states = start_states)
-    
+
     def load_random_map(self):
         # Returns random map with two rooms and the gap between them
         m = np.zeros((self.n,self.n))
@@ -420,14 +420,14 @@ class RoomWorld(PuddleWorld):
             num_fruits = self.objects['fruits']
             self.num_fruits_left = num_fruits # initialize this
             num_mines = self.objects['mines']
-            random_states = np.random.choice(len(free_states),num_fruits+num_mines,replace=False) # throws error if too many mines+fruits 
-            
+            random_states = np.random.choice(len(free_states),num_fruits+num_mines,replace=False) # throws error if too many mines+fruits
+
             candidate_states = [free_states[s] for s in random_states]
-            
+
             f_ind = candidate_states[:num_fruits]
             m_ind = candidate_states[num_fruits:]
 
-            for k,l in f_ind: m[k,l] = WORLD_FRUIT 
+            for k,l in f_ind: m[k,l] = WORLD_FRUIT
             for k,l in m_ind: m[k,l] = WORLD_MINE
         else: # Assumes learn2exit mode otherwise
             m[i,j] = WORLD_INVISIBLE_GOAL # Makes invisible goal in gap between rooms. Invisible so that agent learns to see the gap structure
@@ -438,13 +438,13 @@ class RoomWorld(PuddleWorld):
         room_map = np.ones(m.shape)*-1
         room_map[m!=WORLD_OBSTACLE] = 0
         dummy_map = np.hstack([np.ones((m.shape[0],j)),2*np.ones((m.shape[0],self.n-j))])
-        room_map[room_map==0] = dummy_map[room_map==0] 
+        room_map[room_map==0] = dummy_map[room_map==0]
 
         ## Now make a count for each room index
         goal_count = room_map[m==WORLD_FRUIT] # eg [1,2,2,3] means 1 goal in room 1, 2 in room 2 and 1 in room 3
         self.goal_count_dict = {i+1:0 for i in range(self.num_rooms)}
         for r in goal_count:
-            self.goal_count_dict[r] += 1  
+            self.goal_count_dict[r] += 1
 
         if np.random.randint(2): # like flipping a coin (bernoulli(0.5))
             m = m.T # transpose the Map to learn vertical representations as well.
@@ -465,35 +465,35 @@ class RoomWorld(PuddleWorld):
         self.map = m
         if self.mode == 'fruit':
             start_states = [[i,j]]
-            # Now to enable termination after finding the fruit change to WORLD_GOAL. 
-            # This hinges on _get_view() aliasing fruits and goals as 'good'
-            self.map[self.map==WORLD_FRUIT] = WORLD_GOAL 
+            # Now to enable termination after finding the fruit change to WORLD_GOAL.
+            # This hinges on get_view() aliasing fruits and goals as 'good'
+            self.map[self.map==WORLD_FRUIT] = WORLD_GOAL
         else:
             start_states = []
         self.set_start_state(start_states,self.start_state_ind)
         self.set_term_state()
 
-    def _step(self, action):
-        return_val = super(RoomWorld, self)._step(action) # state, reward, done, _
+    def step(self, action):
+        return_val = super(RoomWorld, self).step(action) # state, reward, done, _
         if not return_val[2]:
-            [row, col] = self.ind2coord(return_val[0]) 
+            [row, col] = self.ind2coord(return_val[0])
             self.goal_count_dict[self.room_map[row,col]] -= self.found_fruit_in_last_turn # Reduce room index fruit counter if fruit was found
         return return_val
-    
-    def _reset(self):
+
+    def reset(self):
         #Randomising map at each run
-        self.reload_random(); 
-        return super(RoomWorld, self)._reset()
+        self.reload_random();
+        return super(RoomWorld, self).reset()
 
 class RoomWorldObject(RoomWorld):
     ''' Bounded 2 Rooms w/exit. Need to pick up all fruits and reach gap to complete task
-    Now solvable since room fruit count is part of observation 
-    Hard task for large n! Without a non-markovian policy, will need to square view large 
+    Now solvable since room fruit count is part of observation
+    Hard task for large n! Without a non-markovian policy, will need to square view large
     (to keep fruits in view, thus the agent realising there's work to be done before leaving) '''
 
-    def _step(self, action): # To set goal once all fruits are taken
+    def step(self, action): # To set goal once all fruits are taken
         # First take care of room index fruit counter
-        return_val = super(RoomWorldObject, self)._step(action) # state, reward, done, _
+        return_val = super(RoomWorldObject, self).step(action) # state, reward, done, _
         self.num_fruits_left -= self.found_fruit_in_last_turn # Reduce total fruit counter if fruit was found
         if self.num_fruits_left <= 0: # set goal state to gap if no fruits in map
             self.map[self.gap_i, self.gap_j] = WORLD_INVISIBLE_GOAL
@@ -518,13 +518,13 @@ class RoomWorldFinal(PuddleWorld):
         if(n is None): # n >= 5
             self.n = 32
         else: self.n = n
-        
+
         m = self.load_map()
 
         start_states = [[30,14],[30,15],[30,16]]
 
         super(RoomWorldFinal, self).__init__(init_map = m, start_states = start_states)
-    
+
     def load_map(self):
         # Returns harcoded map. TODO: Make this smaller?
         m = np.zeros((self.n,self.n))
@@ -545,7 +545,7 @@ class RoomWorldFinal(PuddleWorld):
         # Set fruits
         for i,j in fruit_indexes:
             m[i,j] = WORLD_FRUIT
-        
+
         self.num_fruits_left = len(fruit_indexes)
         self.num_rooms = 6
 
@@ -568,12 +568,12 @@ class RoomWorldFinal(PuddleWorld):
         goal_count = room_map[m==WORLD_FRUIT] # eg [1,2,2,3] means 1 goal in room 1, 2 in room 2 and 1 in room 3
         self.goal_count_dict = {i+1:0 for i in range(self.num_rooms)}
         for r in goal_count:
-            self.goal_count_dict[r] += 1 
+            self.goal_count_dict[r] += 1
 
         return m
 
-    def _step(self, action):
-        return_val = super(RoomWorldFinal, self)._step(action) # state, reward, done, _
+    def step(self, action):
+        return_val = super(RoomWorldFinal, self).step(action) # state, reward, done, _
         if not return_val[2]:
             [row, col] = self.ind2coord(return_val[0])
             self.goal_count_dict[self.room_map[row,col]] -= self.found_fruit_in_last_turn # Reduce room index fruit counter if fruit was found

@@ -15,8 +15,8 @@ LEFT = 3
 class GridWorld(gym.Env):
   metadata = {'render.modes': ['human']}
 
-  def __init__(self, n=10, noise=0.1, terminal_reward=1.0, 
-          border_reward=0.0, step_reward=0.0, start_state=0, 
+  def __init__(self, n=10, noise=0.1, terminal_reward=1.0,
+          border_reward=0.0, step_reward=0.0, start_state=0,
           bump_reward = -0.5, terminal_state_offset=11): #'random'):
     self.n = n
     self.noise = noise
@@ -29,19 +29,19 @@ class GridWorld(gym.Env):
     self.absorbing_state = self.n_states - 1
     self.done = False
     self.start_state = start_state #if not isinstance(start_state, str) else np.random.rand(n**2)
-    self._reset()
+    self.reset()
 
     self.action_space = spaces.Discrete(4)
     self.observation_space = spaces.Discrete(self.n_states) # with absorbing state
     #self._seed()
 
-  def _step(self, action):
+  def step(self, action):
     assert self.action_space.contains(action)
 
     if self.state == self.terminal_state:
       self.state = self.absorbing_state
       self.done = True
-      return self.state, self._get_reward(), self.done, None
+      return self.state, self.get_reward(), self.done, None
 
     [row, col] = self.ind2coord(self.state)
 
@@ -59,18 +59,18 @@ class GridWorld(gym.Env):
 
     new_state = self.coord2ind([row, col])
 
-    reward = self._get_reward(new_state=new_state)
+    reward = self.get_reward(new_state=new_state)
 
     self.state = new_state
 
     return self.state, reward, self.done, None
 
-  def _get_reward(self, new_state=None):
+  def get_reward(self, new_state=None):
     if self.done:
       return self.terminal_reward
 
     reward = self.step_reward
-    
+
     if self.border_reward != 0 and self.at_border():
       reward = self.border_reward
 
@@ -101,11 +101,10 @@ class GridWorld(gym.Env):
     return col * self.n + row
 
 
-  def _reset(self):
+  def reset(self):
     self.state = self.start_state if not isinstance(self.start_state, str) else np.random.randint(self.n_states - 1)
     self.done = False
     return self.state
 
-  def _render(self, mode='human', close=False):
+  def render(self, mode='human', close=False):
     pass
-      

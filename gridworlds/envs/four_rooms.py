@@ -115,13 +115,13 @@ class FourRooms(gym.Env):
       coord_in_room = self.ind2coord(index - self.offsets[room], sizes=self.room_sizes[room])
     return room, coord_in_room # hallway
 
-  def _step(self, action):
+  def step(self, action):
     assert self.action_space.contains(action)
 
     if self.state == self.terminal_state:
       self.state = self.absorbing_state
       self.done = True
-      return self.state, self._get_reward(), self.done, None
+      return self.state, self.get_reward(), self.done, None
 
     in_hallway = self.in_hallway_index()
     [room, coord]= self.decode(self.state, in_hallway=in_hallway)
@@ -155,14 +155,14 @@ class FourRooms(gym.Env):
     new_state = self.encode([room2, coord2])
     self.state = new_state
 
-    reward = self._get_reward(new_state=new_state)
+    reward = self.get_reward(new_state=new_state)
 
     return new_state, reward, self.done, None
 
 
 
 
-  def _get_reward(self, new_state=None):
+  def get_reward(self, new_state=None):
     if self.done:
       return self.terminal_reward
 
@@ -178,10 +178,10 @@ class FourRooms(gym.Env):
     return (row == 0 or row == self.n - 1 or col == 0 or col == self.n - 1)
 
 
-  def _reset(self):
+  def reset(self):
     self.state = self.start_state if not isinstance(self.start_state, str) else np.random.randint(self.nS - 1)
     self.done = False
     return self.state
 
-  def _render(self, mode='human', close=False):
+  def render(self, mode='human', close=False):
     pass
