@@ -54,7 +54,7 @@ class FourRooms(gym.Env):
     start_room = 0
     sz = self.room_sizes[start_room]
     self.start_state = self.offsets[start_room] + np.random.randint(sz[0]*sz[1] - 1)
-    self._reset()
+    self.reset()
 
     self.action_space = spaces.Discrete(self.nA)
     self.observation_space = spaces.Discrete(self.nS) # with absorbing state
